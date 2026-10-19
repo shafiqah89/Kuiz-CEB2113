@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kuiz Interaktif CEB2113 — Pengesanan Kerosakan Tahap Satu</title>
+<style>
+  :root {
+    --navy: #16324f;
+    --blue: #2463a6;
+    --teal: #0f766e;
+    --bg: #f3f6fb;
+    --card: #ffffff;
+    --text: #1f2937;
+    --muted: #64748b;
+    --border: #dbe3ee;
+    --good: #166534;
+    --good-bg: #dcfce7;
+    --bad: #991b1b;
+    --bad-bg: #fee2e2;
+    --accent-bg: #e8f1ff;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; font-family: Arial, Helvetica, sans-serif; color: var(--text);
+    background: linear-gradient(180deg, #eaf2ff 0, var(--bg) 280px);
+    line-height: 1.55;
+  }
+  .container { max-width: 900px; margin: 0 auto; padding: 24px 16px 48px; }
+  header {
+    background: linear-gradient(135deg, var(--navy), var(--blue));
+    color: white; padding: 28px; border-radius: 20px; box-shadow: 0 12px 28px #16324f22;
+  }
+  .eyebrow { text-transform: uppercase; letter-spacing: 1.4px; font-size: .78rem; opacity: .85; font-weight: 700; }
+  h1 { margin: 8px 0 10px; font-size: clamp(1.6rem, 4vw, 2.35rem); line-height: 1.2; }
+  header p { margin: 0; max-width: 720px; }
+  .meta { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 18px; }
+  .pill { background: #ffffff20; border: 1px solid #ffffff45; border-radius: 999px; padding: 6px 11px; font-size: .9rem; }
+  .panel { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 22px; margin-top: 18px; box-shadow: 0 4px 14px #16324f0a; }
+  h2 { color: var(--navy); margin: 0 0 12px; font-size: 1.25rem; }
+  .instructions { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; }
+  .instruction { padding: 12px; background: #f8fafc; border: 1px solid var(--border); border-radius: 12px; }
+  .instruction strong { display: block; color: var(--navy); margin-bottom: 3px; }
+  label { display: block; font-weight: 700; margin: 12px 0 6px; }
+  input[type="text"] { width: 100%; max-width: 480px; padding: 12px 13px; border: 1px solid #b8c5d6; border-radius: 10px; font: inherit; }
+  button { border: 0; border-radius: 10px; padding: 12px 18px; font: inherit; font-weight: 700; cursor: pointer; transition: transform .08s, opacity .15s; }
+  button:active { transform: translateY(1px); }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+  .primary { background: var(--blue); color: white; }
+  .secondary { background: #e8eef6; color: var(--navy); }
+  .success { background: var(--teal); color: white; }
+  .danger { background: #fff1f2; color: #9f1239; border: 1px solid #fecdd3; }
+  .topline { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .progress-wrap { height: 9px; background: #e5eaf2; border-radius: 999px; overflow: hidden; margin: 14px 0 4px; }
+  .progress { height: 100%; width: 0%; background: linear-gradient(90deg, var(--blue), #14b8a6); transition: width .25s; }
+  .question-count { color: var(--muted); font-weight: 700; font-size: .92rem; }
+  .question { font-size: 1.22rem; font-weight: 700; margin: 18px 0; }
+  .options { display: grid; gap: 10px; }
+  .option {
+    display: flex; align-items: flex-start; gap: 12px; width: 100%; text-align: left;
+    background: white; border: 2px solid var(--border); padding: 13px 14px; border-radius: 12px;
+    color: var(--text); font-weight: 500;
+  }
+  .option:hover:not(:disabled) { border-color: #8eb6eb; background: #f8fbff; }
+  .letter { flex: 0 0 30px; height: 30px; display: grid; place-items: center; border-radius: 8px; background: #edf2f8; color: var(--navy); font-weight: 800; }
+  .option.correct { border-color: #22c55e; background: var(--good-bg); }
+  .option.correct .letter { background: #bbf7d0; color: var(--good); }
+  .option.incorrect { border-color: #ef4444; background: var(--bad-bg); }
+  .option.incorrect .letter { background: #fecaca; color: var(--bad); }
+  .feedback { margin-top: 15px; padding: 14px; border-radius: 12px; }
+  .feedback.good { color: var(--good); background: var(--good-bg); }
+  .feedback.bad { color: var(--bad); background: var(--bad-bg); }
+  .feedback strong { display: block; margin-bottom: 3px; }
+  .actions { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-top: 18px; }
+  .hidden { display: none !important; }
+  .result-score { font-size: clamp(2.5rem, 8vw, 4.5rem); font-weight: 800; color: var(--blue); line-height: 1.1; margin: 10px 0; }
+  .result-badge { display: inline-block; padding: 7px 12px; border-radius: 999px; background: var(--accent-bg); color: var(--navy); font-weight: 700; }
+  .review-item { border-top: 1px solid var(--border); padding: 14px 0; }
+  .review-item:first-child { border-top: 0; }
+  .review-item p { margin: 5px 0; }
+  .review-correct { color: var(--good); font-weight: 700; }
+  .review-wrong { color: var(--bad); font-weight: 700; }
+  footer { text-align: center; color: var(--muted); font-size: .86rem; margin-top: 20px; }
+  .small-note { color: var(--muted); font-size: .9rem; }
+  @media (max-width: 560px) {
+    .container { padding: 12px 10px 30px; }
+    header, .panel { padding: 18px; border-radius: 14px; }
+    .actions button { flex: 1; }
+  }
+  @media print {
+    body { background: white; }
+    header { background: white; color: black; border: 1px solid #999; box-shadow: none; }
+    .no-print, #quizPanel, #startPanel { display: none !important; }
+    #resultPanel { display: block !important; box-shadow: none; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div class="eyebrow">Bahan pembelajaran digital</div>
+    <h1>Kuiz Interaktif CEB2113</h1>
+    <p><strong>Keperluan Pengesanan Kerosakan Tahap Satu</strong><br>
+    Uji pengetahuan tentang SOP, keselamatan ESD, komponen elektronik, peralatan pengukuran, pemeriksaan PCBA dan laporan kerosakan.</p>
+    <div class="meta">
+      <span class="pill">20 soalan</span><span class="pill">20 markah</span>
+      <span class="pill">Aneka pilihan</span><span class="pill">Maklum balas automatik</span>
+    </div>
+  </header>
+
+  <section id="startPanel" class="panel">
+    <h2>Sebelum bermula</h2>
+    <div class="instructions">
+      <div class="instruction"><strong>📌 Cara menjawab</strong>Pilih satu jawapan bagi setiap soalan.</div>
+      <div class="instruction"><strong>⏱️ Tempoh</strong>Anggaran 20–30 minit. Tiada pemasa wajib.</div>
+      <div class="instruction"><strong>🎯 Pemarkahan</strong>1 markah untuk setiap jawapan betul.</div>
+      <div class="instruction"><strong>📊 Keputusan</strong>Skor, ulasan dan semakan jawapan dipaparkan di akhir kuiz.</div>
+    </div>
+    <label for="studentName">Nama pelajar (pilihan)</label>
+    <input type="text" id="studentName" placeholder="Masukkan nama anda">
+    <p class="small-note">Nota: Nama dan keputusan tidak dihantar ke mana-mana pelayan. Kuiz ini berjalan secara setempat dalam pelayar anda.</p>
+    <button class="primary" id="startBtn">Mula kuiz →</button>
+  </section>
+
+  <section id="quizPanel" class="panel hidden" aria-live="polite">
+    <div class="topline">
+      <span class="question-count" id="questionCount">Soalan 1 daripada 20</span>
+      <span class="question-count" id="scoreLive">Markah: 0</span>
+    </div>
+    <div class="progress-wrap" aria-label="Kemajuan kuiz"><div class="progress" id="progressBar"></div></div>
+    <div class="question" id="questionText"></div>
+    <div class="options" id="options"></div>
+    <div id="feedback" class="feedback hidden" role="status"></div>
+    <div class="actions">
+      <button class="secondary" id="quitBtn" type="button">Tamatkan kuiz</button>
+      <button class="primary" id="nextBtn" type="button" disabled>Soalan seterusnya →</button>
+    </div>
+  </section>
+
+  <section id="resultPanel" class="panel hidden">
+    <div class="eyebrow" style="color:var(--muted)">Keputusan kuiz</div>
+    <h2 id="resultHeading">Tahniah!</h2>
+    <div class="result-score" id="finalScore">0/20</div>
+    <div id="resultBadge" class="result-badge">Keputusan</div>
+    <p id="resultMessage"></p>
+    <p id="resultStudent"></p>
+    <div class="actions no-print">
+      <button class="primary" id="reviewBtn">Semak semua jawapan</button>
+      <button class="secondary" id="printBtn">Cetak / Simpan PDF</button>
+      <button class="success" id="restartBtn">Cuba lagi ↻</button>
+    </div>
+    <div id="review" class="hidden">
+      <h2 style="margin-top:24px">Semakan jawapan</h2>
+      <div id="reviewList"></div>
+    </div>
+  </section>
+  <footer>CEB2113 • Kuiz latihan untuk tujuan pembelajaran. Sila rujuk nota dan SOP rasmi institusi bagi prosedur kerja sebenar.</footer>
+</div>
+
+<script>
+const questions = [
+  {
+    topic: "SOP",
+    q: "Apakah tujuan utama Standard Operating Procedure (SOP) dalam aktiviti pengesanan kerosakan?",
+    options: [
+      "Mempercepatkan kerja tanpa mengikut prosedur.",
+      "Memastikan kerja dilakukan secara teratur, selamat dan mengikut prosedur.",
+      "Mengurangkan penggunaan semua peralatan pengukuran.",
+      "Mengelakkan keperluan merekodkan kerosakan."
+    ],
+    answer: 1,
+    explain: "SOP menyeragamkan langkah kerja dan membantu memastikan pemeriksaan dilakukan dengan selamat serta konsisten."
+  },
+  {
+    topic: "ESD",
+    q: "Apakah maksud ESD dalam bidang elektronik?",
+    options: ["Electronic System Design.", "Electrical Safety Device.", "Electrostatic Discharge.", "Electronic Signal Detection."],
+    answer: 2,
+    explain: "ESD ialah Electrostatic Discharge, iaitu nyahcas elektrik statik yang boleh merosakkan komponen sensitif."
+  },
+  {
+    topic: "Pencegahan ESD",
+    q: "Apakah fungsi utama gelang tangan antistatik (anti-static wrist strap)?",
+    options: [
+      "Mengukur nilai rintangan komponen.",
+      "Membantu mengurangkan risiko nyahcas elektrostatik kepada komponen elektronik.",
+      "Mengukur voltan bekalan kuasa.",
+      "Menanggalkan komponen daripada PCB."
+    ],
+    answer: 1,
+    explain: "Gelang antistatik membantu menyamakan potensi elektrik badan dengan titik pembumian yang sesuai apabila digunakan dengan betul."
+  },
+  {
+    topic: "PPE",
+    q: "Antara berikut, yang manakah contoh PPE yang sesuai mengikut risiko kerja elektronik?",
+    options: [
+      "Gelang tangan antistatik sahaja.",
+      "Pemutar skru dan playar sahaja.",
+      "Kasut keselamatan dan pelindung mata yang sesuai.",
+      "Multimeter dan pateri."
+    ],
+    answer: 2,
+    explain: "PPE dipilih berdasarkan bahaya kerja. Gelang antistatik ialah kawalan ESD, bukan pengganti semua PPE."
+  },
+  {
+    topic: "Komponen elektronik",
+    q: "Apakah fungsi utama perintang dalam litar elektronik?",
+    options: [
+      "Mengawal atau mengehadkan arus dalam litar.",
+      "Menyimpan tenaga dalam bentuk medan magnet.",
+      "Menukarkan arus ulang-alik kepada arus terus secara langsung.",
+      "Menguatkan semua isyarat elektrik."
+    ],
+    answer: 0,
+    explain: "Perintang memberikan rintangan kepada aliran arus dan digunakan untuk menetapkan atau mengehadkan arus serta membahagi voltan."
+  },
+  {
+    topic: "PCB",
+    q: "Apakah ciri utama PCB satu lapisan (single-layer PCB)?",
+    options: [
+      "Mempunyai lapisan kuprum pada satu sisi sahaja.",
+      "Mempunyai sekurang-kurangnya empat lapisan kuprum.",
+      "Tidak mempunyai sebarang lapisan konduktif.",
+      "Mempunyai komponen pada kedua-dua sisi tanpa trek kuprum."
+    ],
+    answer: 0,
+    explain: "PCB satu lapisan mempunyai corak konduktif pada satu sisi substrat sahaja."
+  },
+  {
+    topic: "Multimeter",
+    q: "Apakah kegunaan utama multimeter digital?",
+    options: [
+      "Memotong trek PCB.",
+      "Menanggalkan komponen yang dipateri.",
+      "Mengukur kuantiti elektrik seperti voltan, arus dan rintangan mengikut fungsi serta tetapan meter.",
+      "Membersihkan permukaan PCB."
+    ],
+    answer: 2,
+    explain: "Multimeter boleh mengukur beberapa kuantiti elektrik; fungsi yang tersedia bergantung pada model meter."
+  },
+  {
+    topic: "Pengukuran voltan",
+    q: "Bagaimanakah voltmeter disambungkan untuk mengukur voltan merentasi sesuatu komponen?",
+    options: [
+      "Secara siri dengan komponen.",
+      "Secara selari dengan komponen.",
+      "Terus ke bumi tanpa sambungan lain.",
+      "Secara siri dengan fius tanpa mengira litar."
+    ],
+    answer: 1,
+    explain: "Voltan diukur merentasi dua titik, maka probe meter diletakkan secara selari dengan komponen atau titik ujian."
+  },
+  {
+    topic: "Pengukuran arus",
+    q: "Bagaimanakah ammeter disambungkan untuk mengukur arus yang melalui beban?",
+    options: [
+      "Secara selari dengan bekalan kuasa.",
+      "Secara selari dengan komponen.",
+      "Secara siri dengan beban.",
+      "Merentasi terminal bekalan kuasa secara terus."
+    ],
+    answer: 2,
+    explain: "Ammeter disambungkan secara siri dalam laluan arus. Jangan sambungkan meter dalam mod arus terus merentasi bekalan kuasa."
+  },
+  {
+    topic: "Pengukuran rintangan",
+    q: "Apakah yang perlu dilakukan sebelum mengukur rintangan pada litar?",
+    options: [
+      "Pastikan litar dibekalkan voltan maksimum.",
+      "Matikan bekalan kuasa dan pastikan kapasitor dinyahcas dengan selamat sebelum pengukuran.",
+      "Sambungkan multimeter dalam mod arus.",
+      "Pintaskan semua terminal komponen."
+    ],
+    answer: 1,
+    explain: "Pengukuran rintangan dibuat pada litar yang tidak bertenaga. Ikut SOP untuk mengesahkan bekalan terputus dan kapasitor dinyahcas."
+  },
+  {
+    topic: "Kesinambungan",
+    q: "Apakah tujuan ujian kesinambungan (continuity test) pada PCB?",
+    options: [
+      "Menentukan warna komponen.",
+      "Mengukur suhu persekitaran.",
+      "Memeriksa sama ada laluan elektrik mempunyai sambungan yang berterusan.",
+      "Menentukan saiz fizikal PCB."
+    ],
+    answer: 2,
+    explain: "Ujian kesinambungan membantu memeriksa laluan konduktif yang bersambung. Litar perlu dinyahkuasakan sebelum ujian."
+  },
+  {
+    topic: "Pemeriksaan visual",
+    q: "Antara berikut, yang manakah petunjuk kemungkinan kerosakan pada PCBA?",
+    options: [
+      "Trek PCB mempunyai warna yang seragam.",
+      "Komponen dipasang mengikut kedudukan yang ditetapkan.",
+      "Permukaan papan berada dalam keadaan bersih.",
+      "Terdapat kesan terbakar atau sambungan pateri yang retak."
+    ],
+    answer: 3,
+    explain: "Kesan terbakar, retakan pateri, komponen pecah atau perubahan warna luar biasa boleh menjadi petunjuk yang perlu disiasat."
+  },
+  {
+    topic: "Desoldering pump",
+    q: "Apakah fungsi utama desoldering pump?",
+    options: [
+      "Menyedut pateri cair untuk membantu menanggalkan pateri daripada sambungan.",
+      "Mengukur arus elektrik.",
+      "Menguji kesinambungan litar secara automatik.",
+      "Mengukur kapasitans tanpa sentuhan."
+    ],
+    answer: 0,
+    explain: "Pam penyahpateri menghasilkan sedutan untuk membuang pateri cair daripada sambungan semasa kerja nyahpateri."
+  },
+  {
+    topic: "Solder wick",
+    q: "Apakah fungsi solder wick dalam kerja elektronik?",
+    options: [
+      "Menambah nilai rintangan komponen.",
+      "Menyerap dan membuang lebihan pateri daripada pad PCB atau kaki komponen.",
+      "Mengukur voltan pada litar.",
+      "Mencegah semua kerosakan ESD tanpa peralatan lain."
+    ],
+    answer: 1,
+    explain: "Solder wick ialah jalinan tembaga yang menyerap pateri cair melalui tindakan kapilari."
+  },
+  {
+    topic: "Hot air blower",
+    q: "Apakah kegunaan utama hot air blower dalam kerja pembaikan elektronik?",
+    options: [
+      "Mengukur rintangan trek PCB.",
+      "Membersihkan semua jenis kotoran tanpa bahan tambahan.",
+      "Membekalkan udara panas untuk membantu menanggalkan atau memasang komponen yang sesuai.",
+      "Mengukur arus dalam litar."
+    ],
+    answer: 2,
+    explain: "Udara panas digunakan untuk memanaskan sambungan pateri bagi komponen yang sesuai. Kawal suhu dan aliran udara mengikut keperluan komponen."
+  },
+  {
+    topic: "Stesen kerja",
+    q: "Mengapakah stesen kerja perlu disusun dengan kemas sebelum aktiviti pengesanan kerosakan?",
+    options: [
+      "Untuk menyimpan semua peralatan tanpa mengira keselamatan.",
+      "Untuk mengelakkan keperluan menggunakan SOP.",
+      "Untuk meningkatkan bilangan komponen yang rosak.",
+      "Untuk mengurangkan risiko kemalangan dan memudahkan kerja pemeriksaan."
+    ],
+    answer: 3,
+    explain: "Stesen kerja yang kemas membantu mengurangkan bahaya, mengelakkan kehilangan alat dan memudahkan proses pemeriksaan."
+  },
+  {
+    topic: "5S",
+    q: "Apakah tujuan utama pelaksanaan kaedah 5S di tempat kerja?",
+    options: [
+      "Memastikan semua peralatan diletakkan di atas meja.",
+      "Mewujudkan tempat kerja yang teratur, bersih dan selamat.",
+      "Menghapuskan semua rekod penyelenggaraan.",
+      "Mengurangkan keperluan latihan keselamatan."
+    ],
+    answer: 1,
+    explain: "5S membantu mengekalkan tempat kerja yang teratur, bersih dan cekap serta menyokong amalan kerja selamat."
+  },
+  {
+    topic: "Laporan kerosakan",
+    q: "Maklumat manakah yang paling penting untuk dimasukkan dalam laporan pengesanan kerosakan?",
+    options: [
+      "Simptom kerosakan, lokasi kerosakan, kaedah pemeriksaan dan hasil pemeriksaan.",
+      "Nama rakan yang tidak terlibat dalam pemeriksaan.",
+      "Senarai peralatan yang tidak digunakan.",
+      "Maklumat yang tidak berkaitan dengan PCBA."
+    ],
+    answer: 0,
+    explain: "Laporan perlu merekodkan simptom, pemeriksaan yang dijalankan, keputusan yang diperoleh dan tindakan susulan."
+  },
+  {
+    topic: "Tindakan pembaikan",
+    q: "Seorang pelajar mengesan sambungan pateri yang retak pada PCBA. Apakah tindakan paling sesuai?",
+    options: [
+      "Terus membuang keseluruhan PCB tanpa pemeriksaan lanjut.",
+      "Menyambungkan bekalan kuasa tanpa menilai keselamatan.",
+      "Merekodkan penemuan, mengesahkan kerosakan melalui pemeriksaan yang sesuai dan mencadangkan tindakan pembaikan mengikut prosedur.",
+      "Mengabaikan kerosakan jika PCBA masih boleh dihidupkan."
+    ],
+    answer: 2,
+    explain: "Penemuan perlu direkodkan dan disahkan. Sebarang kerja pembaikan mesti mengikut SOP serta tahap kebenaran dan kemahiran pelaksana."
+  },
+  {
+    topic: "Penyelesaian masalah",
+    q: "Sebuah PCBA tidak berfungsi. Pemeriksaan visual tidak menunjukkan kerosakan yang jelas. Apakah langkah seterusnya yang paling sesuai?",
+    options: [
+      "Menggantikan semua komponen tanpa membuat ujian.",
+      "Menambah voltan bekalan sehingga PCBA berfungsi.",
+      "Menganggap PCBA berada dalam keadaan baik.",
+      "Merujuk rajah skematik, mengenal pasti titik ujian dan menjalankan pengukuran yang sesuai mengikut SOP serta langkah keselamatan."
+    ],
+    answer: 3,
+    explain: "Selepas pemeriksaan visual, teruskan dengan pemeriksaan sistematik berdasarkan rajah skematik, titik ujian dan prosedur yang selamat."
+  }
+];
+
+let current = 0;
+let score = 0;
+let answers = [];
+let locked = false;
+let studentName = "";
+
+const $ = (id) => document.getElementById(id);
+const startPanel = $("startPanel");
+const quizPanel = $("quizPanel");
+const resultPanel = $("resultPanel");
+
+$("startBtn").addEventListener("click", () => {
+  studentName = $("studentName").value.trim();
+  current = 0; score = 0; answers = []; locked = false;
+  startPanel.classList.add("hidden");
+  resultPanel.classList.add("hidden");
+  quizPanel.classList.remove("hidden");
+  renderQuestion();
+});
+
+function renderQuestion() {
+  locked = false;
+  const item = questions[current];
+  $("questionCount").textContent = `Soalan ${current + 1} daripada ${questions.length} • ${item.topic}`;
+  $("scoreLive").textContent = `Markah: ${score}`;
+  $("progressBar").style.width = `${(current / questions.length) * 100}%`;
+  $("questionText").textContent = `${current + 1}. ${item.q}`;
+  $("options").innerHTML = "";
+  $("feedback").className = "feedback hidden";
+  $("feedback").textContent = "";
+  $("nextBtn").disabled = true;
+  $("nextBtn").textContent = current === questions.length - 1 ? "Lihat keputusan →" : "Soalan seterusnya →";
+
+  item.options.forEach((option, index) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "option";
+    button.innerHTML = `<span class="letter">${String.fromCharCode(65 + index)}</span><span></span>`;
+    button.querySelector("span:last-child").textContent = option;
+    button.addEventListener("click", () => chooseAnswer(index));
+    $("options").appendChild(button);
+  });
+}
+
+function chooseAnswer(index) {
+  if (locked) return;
+  locked = true;
+  const item = questions[current];
+  const isCorrect = index === item.answer;
+  answers[current] = index;
+  if (isCorrect) score++;
+
+  const buttons = [...$("options").querySelectorAll("button")];
+  buttons.forEach((button, i) => {
+    button.disabled = true;
+    if (i === item.answer) button.classList.add("correct");
+    if (i === index && !isCorrect) button.classList.add("incorrect");
+  });
+
+  const feedback = $("feedback");
+  feedback.className = `feedback ${isCorrect ? "good" : "bad"}`;
+  const heading = isCorrect ? "Betul! +1 markah" : "Belum tepat.";
+  feedback.innerHTML = `<strong>${heading}</strong><span></span>`;
+  feedback.querySelector("span").textContent = `${isCorrect ? "" : "Jawapan yang betul: " + String.fromCharCode(65 + item.answer) + ". " + item.options[item.answer] + " "}Penjelasan: ${item.explain}`;
+  $("scoreLive").textContent = `Markah: ${score}`;
+  $("progressBar").style.width = `${((current + 1) / questions.length) * 100}%`;
+  $("nextBtn").disabled = false;
+}
+
+$("nextBtn").addEventListener("click", () => {
+  if (!locked) return;
+  if (current < questions.length - 1) {
+    current++;
+    renderQuestion();
+  } else {
+    showResults();
+  }
+});
+
+$("quitBtn").addEventListener("click", () => {
+  if (confirm("Tamatkan kuiz sekarang dan lihat keputusan berdasarkan soalan yang telah dijawab?")) {
+    // Unanswered questions count as incorrect.
+    while (answers.length < questions.length) answers.push(null);
+    showResults();
+  }
+});
+
+function showResults() {
+  quizPanel.classList.add("hidden");
+  resultPanel.classList.remove("hidden");
+  const percent = Math.round((score / questions.length) * 100);
+  let level, message;
+  if (percent >= 90) {
+    level = "Cemerlang";
+    message = "Penguasaan anda sangat baik. Teruskan dengan latihan analisis kerosakan dan amali mengikut SOP.";
+  } else if (percent >= 75) {
+    level = "Baik";
+    message = "Anda menunjukkan pemahaman yang baik. Semak soalan yang salah untuk mengukuhkan pengetahuan.";
+  } else if (percent >= 55) {
+    level = "Memuaskan";
+    message = "Asas anda sedang berkembang. Ulang kaji topik yang belum dikuasai dan cuba kuiz sekali lagi.";
+  } else {
+    level = "Perlu latihan tambahan";
+    message = "Sila ulang kaji nota, SOP dan fungsi peralatan sebelum mencuba semula kuiz.";
+  }
+  $("resultHeading").textContent = studentName ? `Keputusan: ${studentName}` : "Keputusan anda";
+  $("finalScore").textContent = `${score}/${questions.length}`;
+  $("resultBadge").textContent = `${percent}% • ${level}`;
+  $("resultMessage").textContent = message;
+  $("resultStudent").textContent = studentName ? `Nama pelajar: ${studentName}` : "";
+  buildReview();
+}
+
+function buildReview() {
+  const list = $("reviewList");
+  list.innerHTML = "";
+  questions.forEach((item, i) => {
+    const chosen = answers[i];
+    const correct = chosen === item.answer;
+    const div = document.createElement("div");
+    div.className = "review-item";
+    const title = document.createElement("strong");
+    title.textContent = `${i + 1}. ${item.q}`;
+    const status = document.createElement("p");
+    status.className = correct ? "review-correct" : "review-wrong";
+    status.textContent = chosen === null || chosen === undefined
+      ? "Tidak dijawab."
+      : correct
+        ? `Jawapan anda: ${String.fromCharCode(65 + chosen)}. Betul.`
+        : `Jawapan anda: ${String.fromCharCode(65 + chosen)}. Salah.`;
+    const correctAnswer = document.createElement("p");
+    correctAnswer.textContent = `Jawapan betul: ${String.fromCharCode(65 + item.answer)}. ${item.options[item.answer]}`;
+    const explanation = document.createElement("p");
+    explanation.className = "small-note";
+    explanation.textContent = `Penjelasan: ${item.explain}`;
+    div.append(title, status, correctAnswer, explanation);
+    list.appendChild(div);
+  });
+}
+
+$("reviewBtn").addEventListener("click", () => {
+  $("review").classList.toggle("hidden");
+  $("reviewBtn").textContent = $("review").classList.contains("hidden") ? "Semak semua jawapan" : "Sembunyikan semakan";
+});
+$("printBtn").addEventListener("click", () => window.print());
+$("restartBtn").addEventListener("click", () => {
+  $("review").classList.add("hidden");
+  resultPanel.classList.add("hidden");
+  startPanel.classList.remove("hidden");
+  quizPanel.classList.add("hidden");
+  $("studentName").value = studentName;
+});
+</script>
+</body>
+</html>
